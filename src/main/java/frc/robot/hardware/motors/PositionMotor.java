@@ -2,6 +2,8 @@ package frc.robot.hardware.motors;
 
 import java.util.function.Consumer;
 
+import com.ctre.phoenix.motorcontrol.ControlMode;
+import com.ctre.phoenix.motorcontrol.can.TalonSRX;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.revrobotics.CANSparkMax;
 
@@ -46,6 +48,7 @@ public interface PositionMotor extends Loggable {
             public void log(String name) {
                 HoundLog.log(name + "/Position", motor.getPosition().getValueAsDouble());
                 HoundLog.log(name + "/Velocity", motor.getVelocity().getValueAsDouble());
+                HoundLog.log(name + "/Target", targetPos);
                 HoundLog.log(name + "/Temperature", motor.getDeviceTemp().getValueAsDouble());
                 HoundLog.log(name + "/Stator Current", motor.getStatorCurrent().getValueAsDouble());
                 HoundLog.log(name + "/Supply Current", motor.getSupplyCurrent().getValueAsDouble());
@@ -71,11 +74,7 @@ public interface PositionMotor extends Loggable {
                     feedforwardVolts = ff.kg + ff.ks * Math.signum(fbVolts);
                 }
                 double totalVolts = fbVolts + feedforwardVolts;
-                if (fb.atGoal()) {
-                    motor.setVoltage(feedforwardVolts);
-                } else {
-                    motor.setVoltage(totalVolts);
-                }
+                motor.setVoltage(totalVolts);
             }
         }
         return new PositionFX();
@@ -108,6 +107,7 @@ public interface PositionMotor extends Loggable {
                 HoundLog.log(name + "/Stator Current", motor.getOutputCurrent());
                 HoundLog.log(name + "/Position", motor.getEncoder().getPosition());
                 HoundLog.log(name + "/Velocity", motor.getEncoder().getVelocity());
+                HoundLog.log(name + "/Target", targetPos);
             }
             @Override
             public void setPosition(double target) {
@@ -129,14 +129,67 @@ public interface PositionMotor extends Loggable {
                     feedforwardVolts = ff.kg + ff.ks * Math.signum(fbVolts);
                 }
                 double totalVolts = fbVolts + feedforwardVolts;
-                if (fb.atGoal()) {
-                    motor.setVoltage(feedforwardVolts);
-                } else {
-                    motor.setVoltage(totalVolts);
-                }
+                motor.setVoltage(totalVolts);
             }
         }
         return new PositionSparkMax();
+    }
+
+    public static PositionMotor fromTalonSRX(
+        int canID,
+        double conversionFactor,
+        Consumer<TalonSRX> config,
+        FeedbackController fb,
+        ElevatorFeedforward ff
+    ) {
+        if (RobotBase.isSimulation()) {
+            if (ff == null) {
+                return fromIdealSim(fb);
+            } else {
+                return fromRealisticSim(fb, ff);
+            }
+        }
+        class PositionSRX extends SubsystemBase implements PositionMotor {
+            TalonSRX motor = new TalonSRX(canID);
+            double targetPos = 0;
+            @Override
+            public void log(String name) {
+                HoundLog.log(name + "/Position", motor.getSelectedSensorPosition() * conversionFactor);
+                HoundLog.log(name + "/Velocity", motor.getSelectedSensorVelocity() * 10 * conversionFactor);
+                HoundLog.log(name + "/Target", targetPos);
+            }
+
+            @Override
+            public void setPosition(double target) {
+                targetPos = target;
+            }
+
+            @Override
+            public void resetPosition(double actual) {
+                motor.setSelectedSensorPosition(targetPos / conversionFactor);
+            }
+
+            @Override
+            public double getPosition() {
+                return motor.getSelectedSensorPosition() * conversionFactor;
+            }
+
+            @Override
+            public void periodic() {
+                if (DriverStation.isDisabled()) {
+                    motor.set(ControlMode.PercentOutput, 0);
+                    return;
+                }
+                double feedbackVolts = fb.calculate(motor.getSelectedSensorPosition() * conversionFactor, targetPos);
+                double feedforwardVolts = ff.kg + ff.ks * Math.signum(feedbackVolts);
+                double totalVolts = feedbackVolts + feedforwardVolts;
+                if (DriverStation.isDisabled()) {
+                    totalVolts = 0;
+                }
+                motor.set(ControlMode.PercentOutput, totalVolts / motor.getBusVoltage());
+            }
+        }
+        return new PositionSRX();
     }
 
     public static PositionMotor fromRealisticSim(
@@ -177,11 +230,7 @@ public interface PositionMotor extends Loggable {
                 if (DriverStation.isDisabled()) {
                     totalVolts = 0;
                 }
-                if (fb.atGoal()) {
-                    sim.setVoltage(feedforwardVolts);
-                } else {
-                    sim.setVoltage(totalVolts);
-                }
+                sim.setVoltage(totalVolts);
             }
         }
         return new PositionRealistic();

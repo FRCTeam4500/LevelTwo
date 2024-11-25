@@ -72,11 +72,7 @@ public interface ArmMotor extends Loggable {
                         );
                 }
                 double totalVolts = fbVolts + feedforwardVolts;
-                if (fb.atGoal()) {
-                    motor.setVoltage(feedforwardVolts);
-                } else {
-                    motor.setVoltage(totalVolts);
-                }
+                motor.setVoltage(totalVolts);
             }
         }
         return new ArmFX();
@@ -133,11 +129,7 @@ public interface ArmMotor extends Loggable {
                         );
                 }
                 double totalVolts = fbVolts + feedforwardVolts;
-                if (fb.atGoal()) {
-                    motor.setVoltage(feedforwardVolts);
-                } else {
-                    motor.setVoltage(totalVolts);
-                }
+                motor.setVoltage(totalVolts);
             }
         }
         return new ArmSparkMax();
@@ -181,11 +173,7 @@ public interface ArmMotor extends Loggable {
                             sim.getPosition() * Math.PI * 2
                         );
                 double totalVolts = feedbackVolts + feedforwardVolts;
-                if (fb.atGoal()) {
-                    sim.setVoltage(feedforwardVolts);
-                } else {
-                    sim.setVoltage(totalVolts);
-                }
+                sim.setVoltage(totalVolts);
             }
         }
         return new ArmRealistic();

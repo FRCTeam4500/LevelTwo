@@ -70,6 +70,7 @@ public class Robot extends TimedRobot {
         HoundLog.setEnabled(true);
         HoundLog.setPdh(new PowerDistribution());
         HoundLog.setOptions(homeOptions);
+        HoundLog.log("Command Scheduler", CommandScheduler.getInstance());
         GamePieceManager.resetField();
     }
 

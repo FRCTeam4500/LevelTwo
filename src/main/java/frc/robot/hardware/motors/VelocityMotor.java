@@ -85,11 +85,7 @@ public interface VelocityMotor extends Loggable {
                     feedforwardVolts = ff.calculate(targetVel);
                 }
                 double volts = feedbackVolts + feedforwardVolts;
-                if (fb.atGoal()) {
-                    motor.setVoltage(feedforwardVolts);
-                } else {
-                    motor.setVoltage(volts);
-                }
+                motor.setVoltage(volts);
             }
         }
         return new VelocityFX();
@@ -158,11 +154,7 @@ public interface VelocityMotor extends Loggable {
                     feedforwardVolts = ff.calculate(targetVel);
                 }
                 double volts = feedbackVolts + feedforwardVolts;
-                if (fb.atGoal()) {
-                    motor.setVoltage(feedforwardVolts);
-                } else {
-                    motor.setVoltage(volts);
-                }
+                motor.setVoltage(volts);
             }
         }
         return new VelocitySparkMax();
@@ -208,11 +200,7 @@ public interface VelocityMotor extends Loggable {
                 );
                 double ffVolts = ff.calculate(targetVel);
                 double volts = fbVolts + ffVolts;
-                if (fb.atGoal()) {
-                    sim.setVoltage(ffVolts);
-                } else {
-                    sim.setVoltage(volts);
-                }
+                sim.setVoltage(volts);
             }
         }
         return new VelocityRealistic();
