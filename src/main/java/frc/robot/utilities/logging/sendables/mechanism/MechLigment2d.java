@@ -1,9 +1,9 @@
 package frc.robot.utilities.logging.sendables.mechanism;
 
+import java.util.HashMap;
+
 import frc.robot.utilities.logging.HoundLog;
 import frc.robot.utilities.logging.Loggable;
-
-import java.util.HashMap;
 
 public class MechLigment2d implements Loggable {
     private double angle;

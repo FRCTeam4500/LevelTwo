@@ -63,7 +63,7 @@ public interface FeedbackController {
 
             @Override
             public boolean atGoal() {
-                return pid.atSetpoint();
+                return pid.atGoal();
             }
         };
     }
