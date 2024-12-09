@@ -1,0 +1,48 @@
+{
+  "Connections": {
+    "open": true
+  },
+  "NetworkTables Settings": {
+    "mode": "Client (NT4)",
+    "serverTeam": "localhost"
+  },
+  "Persistent Values": {
+    "open": false
+  },
+  "Server": {
+    "open": true
+  },
+  "transitory": {
+    "Robot": {
+      "My Field": {
+        "open": true
+      },
+      "Test Mech": {
+        "Test Root": {
+          "open": true
+        },
+        "dims": {
+          "open": true
+        }
+      },
+      "open": true
+    },
+    "SmartDashboard": {
+      "Field": {
+        "double[]##v_/SmartDashboard/Field/Robot": {
+          "open": true
+        },
+        "double[]##v_/SmartDashboard/Field/Test 1": {
+          "open": true
+        },
+        "open": true
+      },
+      "Robot Mech": {
+        "HI ROOT": {
+          "open": true
+        }
+      },
+      "open": true
+    }
+  }
+}

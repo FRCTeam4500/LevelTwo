@@ -1,0 +1,204 @@
+/*----------------------------------------------------------------------------*/
+/* Copyright (c) 2018 FIRST. All Rights Reserved. */
+/* Open Source Software - may be modified and shared by FRC teams. The code */
+/* must be accompanied by the FIRST BSD license file in the root directory of */
+/* the project. */
+/*----------------------------------------------------------------------------*/
+
+package frc.robot.utilities;
+
+import edu.wpi.first.math.MathUtil;
+import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.math.kinematics.ChassisSpeeds;
+import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.DriverStation.Alliance;
+
+/**
+ * This is a simple container for math methods which are useful
+ */
+public class ExtendedMath {
+
+	public static double dot(Translation2d a, Translation2d b) {
+		return a.getX() * b.getX() + a.getY() * b.getY();
+	}
+
+	public static Rotation2d angleBetween(Translation2d a, Translation2d b) {
+		return a.getAngle().minus(b.getAngle());
+	}
+
+	public static double scalarProjectionOf(Translation2d a, Translation2d b) {
+		var norm = b.getNorm();
+		if (norm == 0) return 0;
+		return dot(a, b) / norm;
+	}
+
+	/**
+	 * @param translation thing to be normalized
+     * @return translation with a magnitude of 1
+	 */
+	public static Translation2d normalize(Translation2d translation) {
+		return translation.div(translation.getNorm());
+	}
+
+	public static double withHardDeadzone(double value, double deadzone) {
+		if (Math.abs(value) < deadzone) return 0;
+		return value;
+	}
+
+	public static double withContinuousDeadzone(double input, double slope, double deadzone) {
+		if (input <= -deadzone) return (input + deadzone) * slope;
+		if (-deadzone < input && input < deadzone) return 0;
+		return (input - deadzone) * slope;
+	}
+
+	public static double withContinuousDeadzone(double input, double deadzone) {
+		return withContinuousDeadzone(input, (1 / (1 - deadzone)), deadzone);
+	}
+
+	/**
+	 * A custom mod function which returns a remainder with the same sign as the dividend. This is
+	 * different from using {@code %}, which returns the remainder with the same sign as the
+	 * divisor.
+	 *
+	 * @param a the dividend
+	 * @param n the divisor
+	 * @return the remainder with the same sign as {@code a}
+	 */
+	public static double customMod(double a, double n) {
+		return a - Math.floor(a / n) * n;
+	}
+
+	public static Rotation2d getOptimizedAngleDifference(
+		Rotation2d currentAngle,
+		Rotation2d targetAngle
+	) {
+		double wrappedCurrent = wrapRotation2d(currentAngle).getDegrees();
+		double wrappedTarget = wrapRotation2d(targetAngle).getDegrees();
+		double originalDifference = wrappedTarget - wrappedCurrent;
+		double alternateDiffernece = (360 - originalDifference) * -Math.signum(originalDifference);
+		if (Math.abs(originalDifference) < Math.abs(alternateDiffernece)) {
+			return Rotation2d.fromDegrees(originalDifference);
+		}
+		return Rotation2d.fromDegrees(alternateDiffernece);
+	}
+
+	/**
+	 * Uses bigsad Euler Angles math to get the overall angle of the robot.
+	 * @param yaw the yaw angle in radians - Rotation about the Z axis
+	 * @param pitch the pitch angle in radians - Rotation about the X axis
+	 * @param roll the roll angle in radians - Rotation about the Y axis
+	 * @return the overall angle of the robot in radians
+	 */
+	public static double getOverallAngle(
+		double yaw,
+		double pitch,
+		double roll
+	) {
+		// Set the ground plane normal vector
+		double[] n1 = { 0.0, 0.0, 1.0 };
+
+		// Calculate the rotation matrices
+		double[][] Rx = {
+			{ 1.0, 0.0, 0.0 },
+			{ 0.0, Math.cos(pitch), -Math.sin(pitch) },
+			{ 0.0, Math.sin(pitch), Math.cos(pitch) },
+		};
+
+		double[][] Ry = {
+			{ Math.cos(roll), 0.0, Math.sin(roll) },
+			{ 0.0, 1.0, 0.0 },
+			{ -Math.sin(roll), 0.0, Math.cos(roll) },
+		};
+
+		double[][] Rz = {
+			{ Math.cos(yaw), -Math.sin(yaw), 0.0 },
+			{ Math.sin(yaw), Math.cos(yaw), 0.0 },
+			{ 0.0, 0.0, 1.0 },
+		};
+
+		// Calculate the normal vector of the rotated plane
+		double[] n2 = new double[3];
+		for (int i = 0; i < 3; i++) {
+			n2[i] = 0.0;
+			for (int j = 0; j < 3; j++) {
+				n2[i] += Rz[i][j] * Ry[j][i] * Rx[j][i] * n1[j];
+			}
+		}
+
+		// Calculate the dot product of the two normal vectors
+		double dotProduct = 0.0;
+		for (int i = 0; i < 3; i++) {
+			dotProduct += n1[i] * n2[i];
+		}
+
+		// Calculate the overall tilt angle in degrees
+		return Math.acos(dotProduct);
+	}
+
+	public static double singedSquare(double input) {
+		return Math.signum(input) * Math.pow(input, 2);
+	}
+
+	public static double cubicLinear(double input, double a, double b) {
+		return (a * Math.pow(input, 3) + b * input);
+	}
+
+	public static Rotation2d wrapRotation2d(Rotation2d rotationToWrap) {
+		return Rotation2d.fromRadians(MathUtil.angleModulus(rotationToWrap.getRadians()));
+	}
+
+	public static boolean within(double a, double b, double threshold) {
+		return Math.abs(a - b) < Math.abs(threshold);
+	}
+
+	public static boolean within(Rotation2d a, Rotation2d b, Rotation2d threshold) {
+		return within(a.getDegrees(), b.getDegrees(), threshold.getDegrees());
+	}
+
+	public static boolean within(Translation2d a, Translation2d b, Translation2d threshold) {
+		return within(a.getX(), b.getX(), threshold.getX())
+			&& within(a.getX(), b.getX(), threshold.getX());
+	}
+
+	public static boolean within(Pose2d a, Pose2d b, Pose2d threshold) {
+		return within(a.getTranslation(), b.getTranslation(), threshold.getTranslation())
+			&& within(a.getRotation(), b.getRotation(), threshold.getRotation());
+	}
+
+	public static boolean within(ChassisSpeeds a, ChassisSpeeds b, ChassisSpeeds threshold) {
+		return within(a.vxMetersPerSecond, b.vxMetersPerSecond, threshold.vxMetersPerSecond)
+			&& within(a.vyMetersPerSecond, b.vyMetersPerSecond, threshold.vyMetersPerSecond)
+			&& within(a.omegaRadiansPerSecond, b.omegaRadiansPerSecond, threshold.omegaRadiansPerSecond);
+	}
+	/**
+	 * takes in current position of robot and finds angle to speaker based off our alliance
+	 * @author Bennett
+	 * @author David
+	 * @deprecated <strong>Use {@link ExtendedMath#getSpeakerAngle(Translation2d) getSpeakerAngle} instead <p> </strong>
+	*/
+	public static Rotation2d getAngleToSpeaker(Pose2d currentPose) {
+		if (currentPose.getY() == 5.6)  return Rotation2d.fromDegrees(180);
+		Pose2d speakerPosition = (DriverStation.getAlliance().orElse(Alliance.Blue) == Alliance.Blue) ?
+		new Pose2d(0, 5.6, Rotation2d.fromDegrees(0)) :
+		new Pose2d(16, 5.6, Rotation2d.fromDegrees(180));
+
+		double wrongAngle = (Math.atan(-(speakerPosition.getX()-currentPose.getX())
+			/(speakerPosition.getY()-currentPose.getY()))
+			-speakerPosition.getRotation().getRadians());
+		return Rotation2d.fromRadians((currentPose.getY() > 5.6) ?
+			wrongAngle + 3*Math.PI/2 :
+			wrongAngle + Math.PI/2);
+	}
+
+	public static Rotation2d getSpeakerAngle(Translation2d current, Alliance currentAlliance) {
+		return new Translation2d(
+			currentAlliance == Alliance.Blue ? 0 : 16, 5.975
+		).minus(current).getAngle().plus(Rotation2d.fromDegrees(180));
+	}
+
+	public static Rotation2d getSpeakerAngle(Translation2d current) {
+		return getSpeakerAngle(current, DriverStation.getAlliance().orElse(Alliance.Blue));
+	}
+}
