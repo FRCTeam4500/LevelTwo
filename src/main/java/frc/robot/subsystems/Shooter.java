@@ -25,14 +25,14 @@ public class Shooter extends SubsystemBase implements Loggable {
             TILT_ID, 
             false, 
             motor -> {
-                motor.setInverted(false);
+                motor.setInverted(true);
                 motor.getEncoder().setPositionConversionFactor(1.0 / 70);
                 motor.getEncoder().setVelocityConversionFactor(1.0 / 70 / 60);
                 motor.setSmartCurrentLimit(30);
                 motor.setIdleMode(IdleMode.kCoast);
             }, 
             FeedbackController.fromPID(
-                new PIDController(3, 0, 0), 
+                new PIDController(30, 0, 0), 
                 controller -> {
                     controller.setTolerance(0.025);
                 }
@@ -43,7 +43,7 @@ public class Shooter extends SubsystemBase implements Loggable {
             RIGHT_ID, 
             false, 
             motor -> {
-                motor.setInverted(false);
+                motor.setInverted(true);
                 motor.setSmartCurrentLimit(30);
                 motor.setIdleMode(IdleMode.kCoast);
             }, 
@@ -107,7 +107,7 @@ public class Shooter extends SubsystemBase implements Loggable {
     public Command finishIntake() {
         return runOnce(
             () -> {
-                tiltMotor.setTarget(0.1);
+                tiltMotor.setTarget(0.12);
                 rightMotor.setTarget(-2000);
                 leftMotor.setTarget(-2000);
                 loaderMotor.setTarget(0);

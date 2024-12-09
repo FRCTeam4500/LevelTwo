@@ -8,13 +8,17 @@ import frc.robot.utilities.logging.Loggable;
 public class Elevator extends SubsystemBase implements Loggable {
     // TODO: Make a PositionMotor and initalize it in the Elevator Constructor
 
+    public Elevator() {
+        // The "conversionFactor" should be 1
+    }
+
     @Override
     public void log(String name) {
         // TODO: Log the PositionMotor you made
     }
 
     public Command extend() {
-        // TODO: Change this command to one that sets the PositionMotor's target to 
+        // TODO: Change this command to one that sets the PositionMotor's target to 3000
         return Commands.none();
     }
 
