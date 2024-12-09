@@ -1,24 +1,45 @@
 package frc.robot;
 
+import edu.wpi.first.wpilibj2.command.Command;
+import frc.robot.subsystems.Elevator;
+import frc.robot.subsystems.Shooter;
 import frc.robot.utilities.logging.Loggable;
-import frc.robot.utilities.logging.sendables.mechanism.LoggedMechanism2d;
 
 public class Superstructure implements Loggable {
-    // Create objects for all non-drivebase subsystems
-    private LoggedMechanism2d robotMech;
+    private Shooter shooter;
+    private Elevator elevator;
     public Superstructure() {
-        robotMech = new LoggedMechanism2d(1.5, 1.5);
-        configureMech();
-    }
-
-    private void configureMech() {
-        // Append subsystem mechs
+        shooter = new Shooter();
+        elevator = new Elevator();
     }
 
     public void log(String name) {
-        // Call log() methods for contained subsystems
-        robotMech.log("Robot Mech");
+        shooter.log(name + "/Shooter");
+        elevator.log(name + "/Elevator");
     }
 
-    // Put Command Factories Here
+    public Command startIntake() {
+        return elevator.stow()
+            .alongWith(shooter.startIntake());
+    }
+
+    public Command finishIntake() {
+        return elevator.stow()
+            .alongWith(shooter.finishIntake());
+    }
+
+    public Command readyAmp() {
+        return elevator.extend()
+            .alongWith(shooter.readyAmp());
+    }
+
+    public Command fire() {
+        return shooter.fire()
+            .andThen(stow());
+    }
+
+    public Command stow() {
+        return shooter.stow()
+            .alongWith(elevator.stow());
+    }
 }
