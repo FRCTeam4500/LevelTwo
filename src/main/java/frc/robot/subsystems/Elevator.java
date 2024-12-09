@@ -10,6 +10,7 @@ public class Elevator extends SubsystemBase implements Loggable {
 
     public Elevator() {
         // The "conversionFactor" should be 1
+        // Use the fromTalonSRX method
     }
 
     @Override
